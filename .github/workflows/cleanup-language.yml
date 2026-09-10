@@ -1,0 +1,22 @@
+name: Finalize language fix
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove temporary language files
+        run: |
+          python3 -c "from pathlib import Path;p=Path('index.html');s=p.read_text(encoding='utf-8').replace('<script src=\"lang.js\"></script>','');p.write_text(s,encoding='utf-8')"
+          rm -f .github/workflows/fix-language.yml .github/workflows/inject-language.yml lang.js
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet || (git commit -m 'Finalize bilingual language system' && git push)
